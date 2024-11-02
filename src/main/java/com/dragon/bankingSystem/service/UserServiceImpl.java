@@ -24,11 +24,15 @@ public class UserServiceImpl implements UserService {
     ModelMapper modelMapper;
 
     EmailService emailService;
+
+    TransactionService transactionService;
+
     @Autowired
-    UserServiceImpl(UserRepo userRepo,ModelMapper modelMapper,EmailService emailService){
+    UserServiceImpl(UserRepo userRepo,ModelMapper modelMapper,EmailService emailService,TransactionService transactionService){
         this.userRepo = userRepo;
         this.modelMapper = modelMapper;
         this.emailService = emailService;
+        this.transactionService = transactionService;
     }
 
 //    create a new user account inside the bank and generate the new account number
@@ -83,18 +87,32 @@ public class UserServiceImpl implements UserService {
 
     //credit an account which mean to increase the balance of a user by certain amount
     @Override
+    @Transactional
     public BankResponse creditAccount(CreditDebitRequest creditDebitRequest) {
         Optional<User> tempUser = userRepo.findByAccountNumber(creditDebitRequest.getAccountNumber());
         if (tempUser.isPresent()) {
             User existingUser = tempUser.get();
             existingUser.setAccountBalance(existingUser.getAccountBalance().add(creditDebitRequest.getAmount()));
+
+            //save the updates to the database
+            userRepo.save(existingUser);
+
+            //save new credit transaction
+            TransactionDto transactionDto =
+                    new TransactionDto(
+                            existingUser.getAccountNumber(),
+                            null,
+                            creditDebitRequest.getAmount(),
+                            "credit",
+                            "success"
+                    );
+            transactionService.saveTransaction(transactionDto);
+
             AccountInfo accountInfo = new AccountInfo(
                     existingUser.getFullName(),
                     existingUser.getAccountNumber(),
                     existingUser.getAccountBalance()
             );
-            //save the updates to the database
-            userRepo.save(existingUser);
             return new BankResponse("200", "User is credited successfully", accountInfo);
         } else {
             return new BankResponse("500", "No user found with such account number", null);
@@ -104,6 +122,7 @@ public class UserServiceImpl implements UserService {
 
     // debit an account which mean to decrease the balance of a user by certain amount
     @Override
+    @Transactional
     public BankResponse debitAccount(CreditDebitRequest creditDebitRequest) {
         Optional<User> tempUser = userRepo.findByAccountNumber(creditDebitRequest.getAccountNumber());
         // check if the user exist
@@ -116,13 +135,25 @@ public class UserServiceImpl implements UserService {
             // Update the account balance
             existingUser.setAccountBalance(existingUser.getAccountBalance().subtract(creditDebitRequest.getAmount()));
 
+            //save the updates to the database
+            userRepo.save(existingUser);
+
+            //save new debit transaction
+            TransactionDto transactionDto =
+                    new TransactionDto(
+                            existingUser.getAccountNumber(),
+                            null,
+                            creditDebitRequest.getAmount(),
+                            "debit",
+                            "success"
+                    );
+            transactionService.saveTransaction(transactionDto);
             AccountInfo accountInfo = new AccountInfo(
                     existingUser.getFullName(),
                     existingUser.getAccountNumber(),
                     existingUser.getAccountBalance()
             );
-            //save the updates to the database
-            userRepo.save(existingUser);
+
             return new BankResponse("200", "User debit account is saved successfully", accountInfo);
         } else {
             return new BankResponse("500", "No user found with such account number", null);
@@ -161,6 +192,17 @@ public class UserServiceImpl implements UserService {
                     .add(transferMoneyRequest.getTransferAmount()));
             userRepo.save(sourceUserTemp);
             userRepo.save(destUserTemp);
+
+            //save the transfer operation between the two users
+            TransactionDto transactionDto =
+                    new TransactionDto(
+                            sourceUserTemp.getAccountNumber(),
+                            destUserTemp.getAccountNumber(),
+                            transferMoneyRequest.getTransferAmount(),
+                            "Transfer",
+                            "success"
+                    );
+            transactionService.saveTransaction(transactionDto);
 
             AccountInfo accountInfo = new AccountInfo(
                     sourceUserTemp.getFullName(),

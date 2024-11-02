@@ -5,6 +5,7 @@ package com.dragon.bankingSystem.service;
 import com.dragon.bankingSystem.entity.User;
 import com.dragon.bankingSystem.model.*;
 import com.dragon.bankingSystem.repository.UserRepo;
+import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -127,6 +128,56 @@ public class UserServiceImpl implements UserService {
             return new BankResponse("500", "No user found with such account number", null);
         }
     }
+
+
+
+
+    @Override
+    @Transactional
+    public BankResponse transferMoney(TransferMoneyRequest transferMoneyRequest) {
+        Optional<User> sourceUser = userRepo.findByAccountNumber(transferMoneyRequest.getSourceAccountNumber());
+        Optional<User> destUser = userRepo.findByAccountNumber(transferMoneyRequest.getDestinationAccountNumber());
+
+        //check for the existence of both users
+        if(sourceUser.isPresent() && destUser.isPresent()){
+            User sourceUserTemp = sourceUser.get();
+            User destUserTemp = destUser.get();
+
+            //check for sufficient funds in the user that wants to send the money
+            if(sourceUserTemp.getAccountBalance()
+                    .compareTo(transferMoneyRequest.getTransferAmount()) <0){
+                return new BankResponse("400",
+                        "Insufficient balance for withdrawal", null);
+            }
+
+            //check if both source and destination have the same account number
+            if (sourceUserTemp.getAccountNumber().equals(destUserTemp.getAccountNumber())) {
+                return new BankResponse("400",
+                        "Cannot transfer money to the same account", null);
+            }
+            sourceUserTemp.setAccountBalance(sourceUserTemp.getAccountBalance()
+                    .subtract(transferMoneyRequest.getTransferAmount()));
+            destUserTemp.setAccountBalance(destUserTemp.getAccountBalance()
+                    .add(transferMoneyRequest.getTransferAmount()));
+            userRepo.save(sourceUserTemp);
+            userRepo.save(destUserTemp);
+
+            AccountInfo accountInfo = new AccountInfo(
+                    sourceUserTemp.getFullName(),
+                    sourceUserTemp.getAccountNumber(),
+                    sourceUserTemp.getAccountBalance()
+            );
+
+            return new BankResponse("200",
+                    "the money transfer is completed successfully", accountInfo);
+        }
+        else {
+            return new BankResponse("500",
+                    "No user found with such account number", null);
+        }
+
+    }
+
 
 
 }

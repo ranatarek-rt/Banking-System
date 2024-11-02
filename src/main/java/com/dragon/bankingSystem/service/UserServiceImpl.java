@@ -3,10 +3,7 @@ package com.dragon.bankingSystem.service;
 
 
 import com.dragon.bankingSystem.entity.User;
-import com.dragon.bankingSystem.model.AccountInfo;
-import com.dragon.bankingSystem.model.AccountRequest;
-import com.dragon.bankingSystem.model.BankResponse;
-import com.dragon.bankingSystem.model.UserDto;
+import com.dragon.bankingSystem.model.*;
 import com.dragon.bankingSystem.repository.UserRepo;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,7 +80,53 @@ public class UserServiceImpl implements UserService {
                 map(user->user.getFullName()).orElse("No user Found with such account number");
     }
 
+    //credit an account which mean to increase the balance of a user by certain amount
+    @Override
+    public BankResponse creditAccount(CreditDebitRequest creditDebitRequest) {
+        Optional<User> tempUser = userRepo.findByAccountNumber(creditDebitRequest.getAccountNumber());
+        if (tempUser.isPresent()) {
+            User existingUser = tempUser.get();
+            existingUser.setAccountBalance(existingUser.getAccountBalance().add(creditDebitRequest.getAmount()));
+            AccountInfo accountInfo = new AccountInfo(
+                    existingUser.getFullName(),
+                    existingUser.getAccountNumber(),
+                    existingUser.getAccountBalance()
+            );
+            //save the updates to the database
+            userRepo.save(existingUser);
+            return new BankResponse("200", "User is credited successfully", accountInfo);
+        } else {
+            return new BankResponse("500", "No user found with such account number", null);
+        }
 
+    }
+
+    // debit an account which mean to decrease the balance of a user by certain amount
+    @Override
+    public BankResponse debitAccount(CreditDebitRequest creditDebitRequest) {
+        Optional<User> tempUser = userRepo.findByAccountNumber(creditDebitRequest.getAccountNumber());
+        // check if the user exist
+        if (tempUser.isPresent()) {
+            User existingUser = tempUser.get();
+            // Check if the balance is sufficient for withdrawal
+            if (existingUser.getAccountBalance().compareTo(creditDebitRequest.getAmount()) < 0) {
+                return new BankResponse("400", "Insufficient balance for withdrawal", null);
+            }
+            // Update the account balance
+            existingUser.setAccountBalance(existingUser.getAccountBalance().subtract(creditDebitRequest.getAmount()));
+
+            AccountInfo accountInfo = new AccountInfo(
+                    existingUser.getFullName(),
+                    existingUser.getAccountNumber(),
+                    existingUser.getAccountBalance()
+            );
+            //save the updates to the database
+            userRepo.save(existingUser);
+            return new BankResponse("200", "User debit account is saved successfully", accountInfo);
+        } else {
+            return new BankResponse("500", "No user found with such account number", null);
+        }
+    }
 
 
 }

@@ -2,6 +2,7 @@ package com.dragon.bankingSystem.controller;
 
 import com.dragon.bankingSystem.model.AccountRequest;
 import com.dragon.bankingSystem.model.BankResponse;
+import com.dragon.bankingSystem.model.CreditDebitRequest;
 import com.dragon.bankingSystem.model.UserDto;
 import com.dragon.bankingSystem.service.UserService;
 import org.springframework.web.bind.annotation.*;
@@ -28,5 +29,13 @@ public class UserController {
     @GetMapping("/userName")
     public String userNameByAccountNumber(@RequestBody AccountRequest accountRequest){
         return userService.findUserNameByAccountNumber(accountRequest);
+    }
+    @PostMapping("/credit")
+    public BankResponse userCreditAccount(@RequestBody CreditDebitRequest creditDebitRequest){
+        return userService.creditAccount(creditDebitRequest);
+    }
+    @PostMapping("/debit")
+    public BankResponse userDebitAccount(@RequestBody CreditDebitRequest creditDebitRequest){
+        return userService.debitAccount(creditDebitRequest);
     }
 }

@@ -70,4 +70,8 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime modifiedAt;
 
+    public String getFullName() {
+        return firstName + " " + (otherName != null ? otherName + " " : "") + lastName;
+    }
+
 }

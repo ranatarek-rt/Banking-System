@@ -24,5 +24,17 @@ CREATE TABLE `users` (
      PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 
+-- **************** create new table for the transactions ********************
+CREATE TABLE `transactions`(
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `source_account_number` varchar(50) NOT NULL,
+    `destination_account_number` varchar(50) DEFAULT NULL,
+    `amount` DECIMAL(15,2) NOT NULL,
+    `transaction_type` varchar(255) NOT NULL,
+    `status` varchar(255) DEFAULT 'success',
+    `timestamp` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
+    PRIMARY KEY (`id`)
+
+)ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 

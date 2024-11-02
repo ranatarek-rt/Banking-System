@@ -1,6 +1,7 @@
 package com.dragon.bankingSystem.model;
 
 import com.dragon.bankingSystem.entity.Gender;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.*;
 

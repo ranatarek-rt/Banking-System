@@ -3,6 +3,7 @@ package com.dragon.bankingSystem.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 @ToString
 @Entity
 @Table(name="transactions")
-public class Transaction {
+public class UserTransaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,9 +39,12 @@ public class Transaction {
     @Column(name="status")
     private String status;
 
-    @Column(name = "timestamp")
+    @Column(name = "created_at")
     @CreationTimestamp
-    private LocalDateTime timestamp;
+    private LocalDateTime createdAt;
 
+    @Column(name = "modified_at")
+    @UpdateTimestamp
+    private LocalDateTime modifiedAt;
 
 }

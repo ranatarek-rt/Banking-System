@@ -9,7 +9,7 @@ import lombok.*;
 @AllArgsConstructor
 @Data
 public class BankResponse {
-    //to send back the status success, created, ..etc
+    //to send back the status success, created, .etc
     private String responseCode;
     private String responseMsg;
     private AccountInfo accountInfo;

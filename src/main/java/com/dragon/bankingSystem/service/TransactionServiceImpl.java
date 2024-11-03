@@ -1,6 +1,6 @@
 package com.dragon.bankingSystem.service;
 
-import com.dragon.bankingSystem.entity.Transaction;
+import com.dragon.bankingSystem.entity.UserTransaction;
 import com.dragon.bankingSystem.model.TransactionDto;
 import com.dragon.bankingSystem.repository.TransactionRepo;
 import org.modelmapper.ModelMapper;
@@ -20,7 +20,7 @@ public class TransactionServiceImpl implements TransactionService{
     }
     @Override
     public void saveTransaction(TransactionDto transactionDto) {
-        Transaction transactionEntity = modelMapper.map(transactionDto,Transaction.class);
+        UserTransaction transactionEntity = modelMapper.map(transactionDto, UserTransaction.class);
         transactionRepo.save(transactionEntity);
     }
 }

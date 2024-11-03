@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.web.bind.annotation.*;
 
+
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
@@ -85,4 +86,6 @@ public class UserController {
     public BankResponse transferMoneyBetweenUsers(@RequestBody TransferMoneyRequest transferMoneyRequest){
         return userService.transferMoney(transferMoneyRequest);
     }
+
+
 }

@@ -1,7 +1,10 @@
 package com.dragon.bankingSystem.repository;
 
-import com.dragon.bankingSystem.entity.Transaction;
+import com.dragon.bankingSystem.entity.UserTransaction;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface TransactionRepo extends JpaRepository<Transaction,String> {
+import java.util.List;
+
+public interface TransactionRepo extends JpaRepository<UserTransaction,String> {
+    List<UserTransaction> findBySourceAccountNumber(String sourceAccountNumber);
 }

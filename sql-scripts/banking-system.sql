@@ -22,9 +22,11 @@ CREATE TABLE `users` (
 	`modified_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
      PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 -- **************** create new table for the transactions ********************
+--   table creation section
+DROP TABLE IF EXISTS `transactions`;
 CREATE TABLE `transactions`(
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `source_account_number` varchar(50) NOT NULL,
@@ -32,9 +34,10 @@ CREATE TABLE `transactions`(
     `amount` DECIMAL(15,2) NOT NULL,
     `transaction_type` varchar(255) NOT NULL,
     `status` varchar(255) DEFAULT 'success',
-    `timestamp` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `modified_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (`id`)
 
-)ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+)ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 

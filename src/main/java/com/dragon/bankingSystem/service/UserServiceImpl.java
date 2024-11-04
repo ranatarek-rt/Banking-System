@@ -9,6 +9,7 @@ import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -27,12 +28,15 @@ public class UserServiceImpl implements UserService {
 
     TransactionService transactionService;
 
+    PasswordEncoder passwordEncoder;
+
     @Autowired
-    UserServiceImpl(UserRepo userRepo,ModelMapper modelMapper,EmailService emailService,TransactionService transactionService){
+    UserServiceImpl(UserRepo userRepo,ModelMapper modelMapper,EmailService emailService,TransactionService transactionService,PasswordEncoder passwordEncoder){
         this.userRepo = userRepo;
         this.modelMapper = modelMapper;
         this.emailService = emailService;
         this.transactionService = transactionService;
+        this.passwordEncoder = passwordEncoder;
     }
 
 //    create a new user account inside the bank and generate the new account number
@@ -44,7 +48,12 @@ public class UserServiceImpl implements UserService {
             return new BankResponse("409","Email is already registered.",null);
         }
         User userEntity = modelMapper.map(userDto,User.class);
+        //generate  a random account number
         userEntity.setAccountNumber(generateAccountNumber());
+
+        //encode the user password
+        userEntity.setPassword(passwordEncoder.encode(userDto.getPassword()));
+
         //check for other error during saving the new user
         try{
             userRepo.save(userEntity);
@@ -220,6 +229,10 @@ public class UserServiceImpl implements UserService {
 
     }
 
+    @Override
+    public String verifyUser(UserDto userDto) {
+        return "";
+    }
 
 
 }

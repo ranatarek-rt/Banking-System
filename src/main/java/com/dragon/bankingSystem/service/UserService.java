@@ -10,4 +10,5 @@ public interface UserService {
     BankResponse creditAccount(CreditDebitRequest creditDebitRequest);
     BankResponse debitAccount(CreditDebitRequest creditDebitRequest);
     BankResponse transferMoney(TransferMoneyRequest transferMoneyRequest);
+    String verifyUser(UserDto userDto);
 }

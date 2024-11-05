@@ -1,11 +1,14 @@
 package com.dragon.bankingSystem.controller;
 
+import com.dragon.bankingSystem.entity.User;
 import com.dragon.bankingSystem.model.*;
 import com.dragon.bankingSystem.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -18,6 +21,16 @@ public class UserController {
     }
 
 
+
+    @GetMapping
+    public List<User> findAll(){
+        return userService.findAllUsers();
+    }
+
+    @PostMapping("/login")
+    public String userLogin(@RequestBody UserDto userDto){
+        return userService.verifyUser(userDto);
+    }
 
     @Operation(summary = "Create a user account",
             description = "Adds a new user account to the banking system.")

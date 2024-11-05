@@ -9,9 +9,13 @@ import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 import static com.dragon.bankingSystem.utils.AccountUtil.generateAccountNumber;
@@ -29,14 +33,21 @@ public class UserServiceImpl implements UserService {
     TransactionService transactionService;
 
     PasswordEncoder passwordEncoder;
+    AuthenticationManager authManager;
+    JWTService jwtService;
 
     @Autowired
-    UserServiceImpl(UserRepo userRepo,ModelMapper modelMapper,EmailService emailService,TransactionService transactionService,PasswordEncoder passwordEncoder){
+    UserServiceImpl(UserRepo userRepo,ModelMapper modelMapper,
+                    EmailService emailService,TransactionService transactionService,
+                    PasswordEncoder passwordEncoder,AuthenticationManager authManager,
+                    JWTService jwtService){
         this.userRepo = userRepo;
         this.modelMapper = modelMapper;
         this.emailService = emailService;
         this.transactionService = transactionService;
         this.passwordEncoder = passwordEncoder;
+        this.authManager = authManager;
+        this.jwtService = jwtService;
     }
 
 //    create a new user account inside the bank and generate the new account number
@@ -231,7 +242,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String verifyUser(UserDto userDto) {
-        return "";
+        Authentication authentication = authManager.
+                authenticate(new UsernamePasswordAuthenticationToken(userDto.getFirstName(),userDto.getPassword()));
+        if(authentication.isAuthenticated()){
+            return jwtService.generateToken(userDto.getFirstName());
+        }
+        return "failure";
+    }
+
+    @Override
+    public List<User> findAllUsers() {
+        return userRepo.findAll();
     }
 
 

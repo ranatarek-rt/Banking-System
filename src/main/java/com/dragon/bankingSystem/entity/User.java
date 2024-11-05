@@ -5,9 +5,13 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
 
 
 //use lombok annotations for getters and setters ,... etc creation
@@ -18,7 +22,7 @@ import java.time.LocalDateTime;
 @ToString
 @Entity
 @Table(name="users")
-public class User {
+public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,6 +40,9 @@ public class User {
 
     @Column(name = "email")
     private String email;
+
+    @Column(name="password")
+    private String password;
 
     @Column(name="phone_number")
     private String phoneNumber;
@@ -70,8 +77,47 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime modifiedAt;
 
+    public User(Long id, String firstName, String lastName, String otherName, String email) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.otherName = otherName;
+        this.email = email;
+    }
+
+
     public String getFullName() {
         return firstName + " " + (otherName != null ? otherName + " " : "") + lastName;
     }
 
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of();
+    }
+
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }

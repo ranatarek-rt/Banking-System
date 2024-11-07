@@ -68,10 +68,7 @@ public class SecurityConfig  {
                         .anyRequest().authenticated()
                 )
                 .formLogin(form->form
-                                .loginPage("/api/user/showLoginForm")  // Custom login page
-                                .loginProcessingUrl("/api/user/login")
-                                .defaultSuccessUrl("/api/user/success")// URL to handle the login POST
-                                .failureHandler(authenticationFailureHandler())  // Custom failure handler
+                                .loginPage("/api/user/showLoginForm")
                                 .permitAll()
 
                         )
@@ -94,9 +91,6 @@ public class SecurityConfig  {
         return httpSecurity.build();
     }
 
-    private AuthenticationFailureHandler authenticationFailureHandler() {
-        return new SimpleUrlAuthenticationFailureHandler("/api/user/showLoginForm?error=true");
-    }
 
 
     // DAO authentication will deal with the database

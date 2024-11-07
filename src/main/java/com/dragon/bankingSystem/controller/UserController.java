@@ -36,9 +36,7 @@ public class UserController {
         String token =  userService.verifyUser(userDto);
         if(token.equals("failure")){
             model.addAttribute("loginError", "Invalid username or password");
-            System.out.println("error");
-            return "redirect:/api/user/showLoginForm";
-
+            return "redirect:/api/user/showLoginForm?error=true";
         }
         else{
             System.out.println(token);
@@ -54,6 +52,11 @@ public class UserController {
     @GetMapping("/success")
     public String successPage(){
         return "success";
+    }
+
+    @GetMapping("/access")
+    public String noAccess(){
+        return "access-denied";
     }
 
     @GetMapping("/showLoginForm")

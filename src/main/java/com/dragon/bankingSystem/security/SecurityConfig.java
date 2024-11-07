@@ -18,9 +18,15 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.JdbcUserDetailsManager;
+import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import javax.sql.DataSource;
 
 @Configuration
 @EnableWebSecurity
@@ -53,35 +59,45 @@ public class SecurityConfig  {
                 .authorizeHttpRequests(config -> config
                         .requestMatchers(HttpMethod.POST, "/api/user").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/user/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/user/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/user/showLoginForm").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/user/showLoginForm?error=true").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/user/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/user/success").permitAll()
                         .requestMatchers("/resources/**", "/static/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .formLogin(form -> form
-                        .loginPage("/api/user/showLoginForm")
-                        .failureUrl("/api/user/showLoginForm?error=true") // Set failure URL with error
-                        .defaultSuccessUrl("/successPage", true)
-                        .permitAll()
+                .formLogin(form->form
+                                .loginPage("/api/user/showLoginForm")  // Custom login page
+                                .loginProcessingUrl("/api/user/login")
+                                .defaultSuccessUrl("/api/user/success")// URL to handle the login POST
+                                .failureHandler(authenticationFailureHandler())  // Custom failure handler
+                                .permitAll()
+
                         )
-                .logout( log-> log
+                .exceptionHandling(ex-> ex.accessDeniedPage("/api/user/access"))
+
+                // Remove formLogin configuration since you are handling login manually
+                .logout(log -> log
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout=true")
                         .permitAll()
-
                 )
                 .httpBasic(basic -> basic
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 )
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Ensure stateless session for JWT
                 )
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class); // Use jwtFilter for JWT handling
 
         return httpSecurity.build();
     }
+
+    private AuthenticationFailureHandler authenticationFailureHandler() {
+        return new SimpleUrlAuthenticationFailureHandler("/api/user/showLoginForm?error=true");
+    }
+
 
     // DAO authentication will deal with the database
     @Bean

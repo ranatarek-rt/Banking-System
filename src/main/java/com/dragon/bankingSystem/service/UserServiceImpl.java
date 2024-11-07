@@ -243,9 +243,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public String verifyUser(UserDto userDto) {
         Authentication authentication = authManager.
-                authenticate(new UsernamePasswordAuthenticationToken(userDto.getFirstName(),userDto.getPassword()));
+                authenticate(new UsernamePasswordAuthenticationToken(userDto.getEmail(),userDto.getPassword()));
         if(authentication.isAuthenticated()){
-            return jwtService.generateToken(userDto.getFirstName());
+            return jwtService.generateToken(userDto.getEmail());
         }
         return "failure";
     }

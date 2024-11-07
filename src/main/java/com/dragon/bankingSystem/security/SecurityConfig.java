@@ -53,7 +53,23 @@ public class SecurityConfig  {
                 .authorizeHttpRequests(config -> config
                         .requestMatchers(HttpMethod.POST, "/api/user").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/user/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/user/showLoginForm").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/user/error").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/user/success").permitAll()
+                        .requestMatchers("/resources/**", "/static/**").permitAll()
                         .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage("/api/user/showLoginForm")
+                        .failureUrl("/api/user/showLoginForm?error=true") // Set failure URL with error
+                        .defaultSuccessUrl("/successPage", true)
+                        .permitAll()
+                        )
+                .logout( log-> log
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout=true")
+                        .permitAll()
+
                 )
                 .httpBasic(basic -> basic
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
@@ -61,8 +77,8 @@ public class SecurityConfig  {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                // Add the JWT filter before UsernamePasswordAuthenticationFilter
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
 
         return httpSecurity.build();
     }

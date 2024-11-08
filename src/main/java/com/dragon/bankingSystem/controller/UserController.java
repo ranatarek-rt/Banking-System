@@ -1,11 +1,16 @@
 package com.dragon.bankingSystem.controller;
 
+import com.dragon.bankingSystem.entity.User;
 import com.dragon.bankingSystem.model.*;
 import com.dragon.bankingSystem.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/user")
@@ -16,20 +21,6 @@ public class UserController {
         this.userService = userService;
     }
 
-
-
-    @Operation(summary = "Create a user account",
-            description = "Adds a new user account to the banking system.")
-    @ApiResponses(value = {
-
-            @ApiResponse(responseCode = "200", description = "User account created successfully"),
-            @ApiResponse(responseCode = "500", description = "Failed to create user account"),
-            @ApiResponse(responseCode = "409", description = "Email is already registered.")
-    })
-    @PostMapping
-    public BankResponse addUserAccount(@RequestBody UserDto userDto){
-        return userService.createUserAccount(userDto);
-    }
 
     @Operation(summary = "Retrieve user balance",
             description = "Fetches the account balance for the specified account number.")
@@ -84,5 +75,9 @@ public class UserController {
     @PostMapping("/transferMoney")
     public BankResponse transferMoneyBetweenUsers(@RequestBody TransferMoneyRequest transferMoneyRequest){
         return userService.transferMoney(transferMoneyRequest);
+    }
+    @GetMapping
+    public List<User> getAll(){
+        return userService.findAllUsers();
     }
 }

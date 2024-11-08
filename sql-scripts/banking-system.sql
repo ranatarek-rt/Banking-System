@@ -18,6 +18,7 @@ CREATE TABLE `users` (
     `account_balance` DECIMAL(15,2),
     `place_of_birth` varchar(255),
     `status` varchar(50),
+    `gender` ENUM('user','admin'),
 	`created_at`TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	`modified_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 

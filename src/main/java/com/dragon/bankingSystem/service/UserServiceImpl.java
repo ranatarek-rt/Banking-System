@@ -9,8 +9,13 @@ import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 import static com.dragon.bankingSystem.utils.AccountUtil.generateAccountNumber;
@@ -22,17 +27,23 @@ public class UserServiceImpl implements UserService {
     UserRepo userRepo;
 
     ModelMapper modelMapper;
-
+    PasswordEncoder passwordEncoder;
     EmailService emailService;
-
+    JwtServiceImpl jwtService;
     TransactionService transactionService;
+    AuthenticationManager authenticationManager;
 
     @Autowired
-    UserServiceImpl(UserRepo userRepo,ModelMapper modelMapper,EmailService emailService,TransactionService transactionService){
+    UserServiceImpl(UserRepo userRepo,ModelMapper modelMapper,
+                    EmailService emailService,TransactionService transactionService,
+                    PasswordEncoder passwordEncoder,JwtServiceImpl jwtService,AuthenticationManager authenticationManager){
         this.userRepo = userRepo;
         this.modelMapper = modelMapper;
         this.emailService = emailService;
         this.transactionService = transactionService;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+        this.authenticationManager = authenticationManager;
     }
 
 //    create a new user account inside the bank and generate the new account number
@@ -41,22 +52,24 @@ public class UserServiceImpl implements UserService {
     public BankResponse createUserAccount(UserDto userDto) {
         //check by email if the user is already registered
         if(userRepo.existsByEmail(userDto.getEmail())){
-            return new BankResponse("409","Email is already registered.",null);
+            return new BankResponse("null","409","Email is already registered.",null);
         }
         User userEntity = modelMapper.map(userDto,User.class);
         userEntity.setAccountNumber(generateAccountNumber());
+        //encode the user password
+        userEntity.setPass(passwordEncoder.encode(userDto.getPass()));
         //check for other error during saving the new user
         try{
             userRepo.save(userEntity);
-
+            String jwtToken = jwtService.generateTokenWithoutExtraClaims(userEntity);
             AccountInfo accountInfo = new AccountInfo(userEntity.getFullName(),
                     userEntity.getAccountNumber(), userEntity.getAccountBalance());
             //we can integrate any email service here
-            return new BankResponse("201", "Account successfully created.", accountInfo);
+            return new BankResponse(jwtToken,"201", "Account successfully created.", accountInfo);
         } catch (DataIntegrityViolationException e) {
-            return new BankResponse("500", "Duplicate account number generated. Try again.", null);
+            return new BankResponse(null,"500", "Duplicate account number generated. Try again.", null);
         } catch (Exception e) {
-            return new BankResponse("500", "Account creation failed: " + e.getMessage(), null);
+            return new BankResponse(null,"500", "Account creation failed: " + e.getMessage(), null);
         }
 
     }
@@ -72,9 +85,9 @@ public class UserServiceImpl implements UserService {
                     existingUser.getAccountNumber(),
                     existingUser.getAccountBalance()
             );
-            return new BankResponse("200", "User is fetched successfully", accountInfo);
+            return new BankResponse(null,"200", "User is fetched successfully", accountInfo);
         } else {
-            return new BankResponse("500", "No user found with such account number", null);
+            return new BankResponse(null,"500", "No user found with such account number", null);
         }
     }
 
@@ -113,9 +126,9 @@ public class UserServiceImpl implements UserService {
                     existingUser.getAccountNumber(),
                     existingUser.getAccountBalance()
             );
-            return new BankResponse("200", "User is credited successfully", accountInfo);
+            return new BankResponse(null,"200", "User is credited successfully", accountInfo);
         } else {
-            return new BankResponse("500", "No user found with such account number", null);
+            return new BankResponse(null,"500", "No user found with such account number", null);
         }
 
     }
@@ -130,7 +143,7 @@ public class UserServiceImpl implements UserService {
             User existingUser = tempUser.get();
             // Check if the balance is sufficient for withdrawal
             if (existingUser.getAccountBalance().compareTo(creditDebitRequest.getAmount()) < 0) {
-                return new BankResponse("400", "Insufficient balance for withdrawal", null);
+                return new BankResponse(null,"400", "Insufficient balance for withdrawal", null);
             }
             // Update the account balance
             existingUser.setAccountBalance(existingUser.getAccountBalance().subtract(creditDebitRequest.getAmount()));
@@ -154,9 +167,9 @@ public class UserServiceImpl implements UserService {
                     existingUser.getAccountBalance()
             );
 
-            return new BankResponse("200", "User debit account is saved successfully", accountInfo);
+            return new BankResponse(null,"200", "User debit account is saved successfully", accountInfo);
         } else {
-            return new BankResponse("500", "No user found with such account number", null);
+            return new BankResponse(null,"500", "No user found with such account number", null);
         }
     }
 
@@ -177,13 +190,13 @@ public class UserServiceImpl implements UserService {
             //check for sufficient funds in the user that wants to send the money
             if(sourceUserTemp.getAccountBalance()
                     .compareTo(transferMoneyRequest.getTransferAmount()) <0){
-                return new BankResponse("400",
+                return new BankResponse(null,"400",
                         "Insufficient balance for withdrawal", null);
             }
 
             //check if both source and destination have the same account number
             if (sourceUserTemp.getAccountNumber().equals(destUserTemp.getAccountNumber())) {
-                return new BankResponse("400",
+                return new BankResponse(null,"400",
                         "Cannot transfer money to the same account", null);
             }
             sourceUserTemp.setAccountBalance(sourceUserTemp.getAccountBalance()
@@ -210,16 +223,35 @@ public class UserServiceImpl implements UserService {
                     sourceUserTemp.getAccountBalance()
             );
 
-            return new BankResponse("200",
+            return new BankResponse(null,"200",
                     "the money transfer is completed successfully", accountInfo);
         }
         else {
-            return new BankResponse("500",
+            return new BankResponse(null,"500",
                     "No user found with such account number", null);
         }
 
     }
 
+    @Override
+    public BankResponse verifyUser(AuthRequest request) {
+        Authentication authentication = authenticationManager.
+                authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
+        if(authentication.isAuthenticated()){
+            Optional<User> optUser  = userRepo.findByEmail(request.getEmail());
 
+            if(optUser.isPresent()){
+                String jwtAuth = jwtService.generateTokenWithoutExtraClaims(optUser.get());
+                return new BankResponse(jwtAuth ,"200","user is authenticated",null);
+            }
+
+        }
+        return new BankResponse(null,"400","user can not be verified",null);
+    }
+
+    @Override
+    public List<User> findAllUsers() {
+        return userRepo.findAll();
+    }
 
 }
